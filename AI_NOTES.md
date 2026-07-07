@@ -1,39 +1,53 @@
 # AI_NOTES.md
 
-## AI Tools & Models Used
-
-I used **Google Gemini CLI (Antigravity agent)** throughout the project — primarily the **Claude Opus 4.6** model for complex architectural work and **Claude Sonnet 4.6** for lighter iterations. The AI handled roughly 70–80% of the raw code output: component scaffolding, API routes, Prisma schema, webhook handler logic, CSS/Tailwind styling, and debugging. I directed every architectural decision, reviewed all output, tested manually, and course-corrected when things went wrong.
-
----
-
-## Key Decisions I Made
-
-1. **Next.js App Router + Prisma + Neon PostgreSQL**: I chose this stack for seamless Vercel deployment with serverless functions. The App Router's API routes act as both webhook receiver and dashboard backend, eliminating a separate server. Neon's serverless Postgres gives instant provisioning with connection pooling — critical for cold-start performance on Vercel.
-
-2. **Rule-based automation engine with conditional matching**: Instead of hardcoding behaviors (e.g., "always label bug issues"), I designed a flexible `Rule` model with `field/matchType/matchValue` pattern matching. This lets users create rules for *any* GitHub event type with arbitrary conditions, making the system genuinely extensible. Default rules ship pre-configured but users can customize or add their own.
-
-3. **Cloudflare Quick Tunnels for webhook development**: Rather than deploying to staging for every code change or paying for ngrok, I used `cloudflared` quick tunnels to expose localhost. This gave fast iteration cycles — edit code, save, test webhook delivery in seconds.
+## 🔍 Initial Research & Credentials Phase
+Before starting implementation, I researched the API and credential ecosystem to plan secure integrations:
+1. **GitHub OAuth**: I configured a new **GitHub OAuth App** under Developer Settings, defining the callback endpoint to point to our App Router authorization callback.
+2. **Webhooks Setup**: I mapped out GitHub's webhook event formats (issue, pull request, push) and webhook signature generation (`HMAC-SHA256`) using a shared client webhook secret.
+3. **Slack Hook**: I set up an **Incoming Webhook** in my Slack workspace workspace, creating a webhook URL to handle standard block layouts.
+4. **Prerequisites for Testing**: Anyone wanting to test this flow can:
+   - Create a GitHub OAuth application with callback set to the deployment URL.
+   - Create an incoming Slack webhook URL.
+   - Register a webhook on their repository matching the payload delivery URL.
 
 ---
 
-## Hardest Bug / Wrong Turn from AI
-
-The trickiest issue was **stale environment variable caching after rotating Cloudflare Tunnel URLs**.
-
-When a `cloudflared` tunnel session expired and I started a new one, the tunnel URL changed. I updated `.env` with the new URL, but webhooks kept silently failing. The AI initially said "just restart the dev server," but that didn't fix it — Next.js's Turbopack had cached the old compiled chunks with the previous URL baked in.
-
-**How I noticed**: GitHub's webhook delivery tab showed successful 200s to the *old* tunnel URL (which was now dead), but my app received nothing. The mismatch between what GitHub thought and what my logs showed was the clue.
-
-**The actual fix** required: (1) kill the dev server, (2) delete the entire `.next` cache directory, (3) update `.env` with the new tunnel URL, (4) restart fresh. The AI didn't initially account for framework-level compilation caching of environment variables — it treated `.env` changes as hot-reloadable, which they aren't for `NEXT_PUBLIC_*` vars that get inlined at build time.
+## 🎨 UI & Design Inspiration
+I researched clean, dark layouts of popular SaaS platforms (like Vercel and Supabase) to build a premium developer dashboard:
+- **Theme**: Cohesive dark-mode theme utilizing deep `#0a0a0a` cards, `#1f1f1f` borders, and high-contrast typography.
+- **Roadmap**:
+  1. Verify the GitHub OAuth authentication sequence works.
+  2. Implement webhook ingestion and signature validation.
+  3. Wire up Slack block notifications.
+  4. Develop the dynamic pattern-matching automation rules engine.
+  5. Build the activity logs audit table and manual retry engine.
 
 ---
 
-## What I'd Improve With More Time
+## 🛠️ AI Tools, Models, & Context Files
+- **AI Tools**: I used **Google Gemini CLI (Antigravity agent)**. It primarily loaded **Claude Opus 4.6** for high-level structure/refactoring and **Claude Sonnet 4.6** for layout/styling.
+- **Work Division**: I designed the database models, wrote the callback security, directed the rules logic, and debugged the Next.js runtime. The AI generated the React components, Tailwind styling, Prisma migrations, and mock data templates.
+- **Context Files**: I did not use any external context files (e.g. `.cursorrules`, `CLAUDE.md`, or `AGENTS.md`) for this project; all instructions were managed interactively.
 
-- **WebSocket/SSE for real-time updates** — replace the 5-second polling interval with push-based updates
-- **GitHub App authentication** — so bot comments come from an app identity, not the user's personal account
-- **Webhook signature verification (HMAC-SHA256)** — currently webhooks are accepted without cryptographic verification
-- **Rate limiting** on the webhook endpoint to prevent abuse
-- **Rule templates marketplace** — let users share and import community-created rules
-- **Proper error boundaries** — React error boundary components for graceful UI failure recovery
-- **E2E tests** with Playwright covering the full OAuth → connect repo → trigger webhook → see log flow
+---
+
+## 💡 Key Decisions
+1. **Next.js App Router + Neon Serverless Postgres**: Allowed a unified serverless deployment on Vercel. Neon handles serverless connections efficiently with built-in connection pooling, keeping database roundtrips fast.
+2. **Generic Rules Engine**: Used a matching schema (`field/matchType/matchValue`) instead of hardcoding actions. This makes the system extensible for custom triggers.
+3. **Cloudflare Quick Tunnels**: Avoided deploying to production for each test. Exposing localhost dynamically made webhook validation immediate.
+
+---
+
+## 🐛 Hardest Bug & AI Wrong Turn
+The trickiest bug was **stale environment variable caching inside Next.js's Turbopack compilation**. 
+When my Cloudflare tunnel URL changed, I updated `.env` with the new callback and public app URLs. Webhook requests kept silently failing, while GitHub logs showed events being delivered to the old, expired tunnel URL. The AI suggested restarting the dev server, which didn't help. The issue was that Turbopack had compiled and cached the old public env variables in the `.next` output directory. 
+
+**The Fix**: I terminated the compiler, manually deleted the `.next` cache directory, updated `.env`, and restarted the dev server. This forced a clean recompilation.
+
+---
+
+## 🛡️ Quality Bar Compliance (Production Readiness)
+- **Signature Verification**: Validates the `x-hub-signature-256` HMAC-SHA256 signature using `GITHUB_WEBHOOK_SECRET` to reject forged requests.
+- **Idempotency**: Webhook events are checked against the DB using the unique `x-github-delivery` header, ensuring duplicate deliveries are skipped.
+- **Resiliency**: Webhook processing executes asynchronously (using Next.js `after()`) so the webhook endpoint responds immediately. If a downstream call fails, the exact stack trace is logged in the DB, the status is set to `failed`, and a manual **Retry** action is available on the dashboard.
+- **Secret Protection**: All credentials are kept in process environment variables on Vercel and are never leaked to client bundles or logs.
