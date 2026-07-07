@@ -1,0 +1,69 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String        @id @default(uuid())
+  githubId     Int           @unique
+  username     String
+  avatarUrl    String
+  accessToken  String        // GitHub OAuth User Access Token (to fetch repos, write back, manage webhooks)
+  createdAt    DateTime      @default(now())
+  rules        Rule[]
+  repositories Repository[]
+}
+
+model Repository {
+  id             String       @id @default(uuid())
+  githubId       Int          @unique
+  name           String
+  fullName       String
+  ownerName      String
+  webhookId      BigInt?      // The webhook configuration ID returned by GitHub, used to delete the webhook upon disconnection
+  isConnected    Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs           WebhookLog[]
+}
+
+model Rule {
+  id              String      @id @default(uuid())
+  name            String
+  eventType       String      // "issues" | "pull_request" | "push"
+  field           String      // "title" | "body" | "author" | "any"
+  matchType       String      // "contains" | "equals" | "starts_with"
+  matchValue      String
+  addLabels       String      // Comma-separated list of labels to add, e.g. "bug,triage"
+  postComment     String?     // Optional markdown comment text
+  sendSlack       Boolean     @default(false)
+  slackWebhookUrl String?     // Custom Slack webhook url. If empty, falls back to environment default.
+  isActive        Boolean     @default(true)
+  isDefault       Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WebhookLog {
+  id             String      @id @default(uuid())
+  deliveryId     String      @unique // X-GitHub-Delivery (for idempotency checks)
+  eventType      String
+  action         String
+  repositoryId   String
+  repository     Repository  @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  payload        String      @db.Text // Full JSON body received from GitHub
+  status         String      // "success" | "failed" | "skipped"
+  actionsTaken   String      @db.Text // JSON string describing actions taken (comments, labels, Slack, etc.)
+  aiSummary      String?     @db.Text // Gemini AI summary
+  aiPriority     String?     // Gemini AI priority (Low/Medium/High)
+  aiLabels       String?     // Suggested labels (comma-separated)
+  errorMessage   String?     @db.Text // Error trace if failed
+  processedAt    DateTime    @default(now())
+  retryCount     Int         @default(0)
+}
