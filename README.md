@@ -108,6 +108,39 @@ See [`.env.example`](.env.example) for template configuration. Required variable
 
 ---
 
+## 🧪 How to Test (Step-by-Step)
+
+AutoBot is deployed and live. You do not need any special or throwaway credentials to test it, as it uses standard GitHub OAuth authentication.
+
+### Step 1: Join the Slack Testing Workspace
+To verify that Slack alerts are successfully triggered and delivered:
+1. Join our dedicated Slack testing workspace using this invite link:
+   👉 **[Join Slack Testing Workspace](https://join.slack.com/t/roshan-3dx1712/shared_invite/zt-435w5zi3p-fsLnZpxfDDT0Xm~rHohmcQ)**
+2. Go to the `#general` channel, where all webhook notifications are routed.
+
+### Step 2: Log in and Connect a Repo
+1. Go to the live URL: **`https://github-autobot.vercel.app`**
+2. Click **Login with GitHub** and authorize the OAuth application.
+3. Once in the dashboard, find any public or private repository you own and toggle the connection switch. (This automatically registers our secure webhook endpoint on your repository via the GitHub API).
+
+### Step 3: Enable Rules
+1. Go to the **Automation Rules** tab.
+2. Ensure the pre-loaded default rules are toggled **ON** (especially **Slack Alert on All Issues** and **Welcome Comment on new PRs**).
+
+### Step 4: Trigger Webhook Events
+On your connected GitHub repository:
+- **Test Slack & AI Triage**: Go to your repository and open a new Issue with any title (e.g. `bug: page is loading slow`).
+  - Switch to your Slack workspace in the `#general` channel to see the beautiful Block Kit notification containing the Gemini AI triage analysis (priority rating, issue summary, recommended labels) and list of executed actions.
+- **Test Comment Posting**: Open a new Pull Request.
+  - Check the PR thread on GitHub to see the automated markdown welcome comment posted by the bot, containing the collapsed AI triage analysis block.
+
+### Step 5: Verify Audit Logs
+1. Switch to the **Logs & Actions** tab on the AutoBot dashboard.
+2. See the new logs showing status `Ready`, response duration, and event payload.
+3. Click a log to view the details, run manual retries, or audit raw payload JSON.
+
+---
+
 ## 📝 License
 
 MIT
