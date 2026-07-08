@@ -2,6 +2,8 @@
 
 AutoBot is a full-stack developer automation engine that connects to your GitHub repositories via OAuth, registers webhooks, and runs customizable workflow rules (auto-labeling, posting markdown welcome comments on issues/PRs, sending Slack notifications) backed by Google Gemini AI triage.
 
+🎥 **[Watch the Loom Video Walkthrough](https://www.loom.com/share/594efeaa86a64e1d95f24baeb3d4c30c)**
+
 ---
 
 ## 🔍 Getting Credentials & Setup
