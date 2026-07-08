@@ -116,7 +116,7 @@ AutoBot is deployed and live. You do not need any special or throwaway credentia
 To verify that Slack alerts are successfully triggered and delivered:
 1. Join our dedicated Slack testing workspace using this invite link:
    👉 **[Join Slack Testing Workspace](https://join.slack.com/t/roshan-3dx1712/shared_invite/zt-435w5zi3p-fsLnZpxfDDT0Xm~rHohmcQ)**
-2. Go to the `#general` channel, where all webhook notifications are routed.
+2. Go to the `#github-bot` channel, where all webhook notifications are routed.
 
 ### Step 2: Log in and Connect a Repo
 1. Go to the live URL: **`https://github-autobot.vercel.app`**
@@ -130,7 +130,7 @@ To verify that Slack alerts are successfully triggered and delivered:
 ### Step 4: Trigger Webhook Events
 On your connected GitHub repository:
 - **Test Slack & AI Triage**: Go to your repository and open a new Issue with any title (e.g. `bug: page is loading slow`).
-  - Switch to your Slack workspace in the `#general` channel to see the beautiful Block Kit notification containing the Gemini AI triage analysis (priority rating, issue summary, recommended labels) and list of executed actions.
+  - Switch to your Slack workspace in the `#github-bot` channel to see the beautiful Block Kit notification containing the Gemini AI triage analysis (priority rating, issue summary, recommended labels) and list of executed actions.
 - **Test Comment Posting**: Open a new Pull Request.
   - Check the PR thread on GitHub to see the automated markdown welcome comment posted by the bot, containing the collapsed AI triage analysis block.
 
