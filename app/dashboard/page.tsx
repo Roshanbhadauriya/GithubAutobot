@@ -61,9 +61,12 @@ export default function DashboardPage() {
       if (res.ok) {
         const data = await res.json();
         setUser({ username: data.username, avatarUrl: data.avatarUrl });
+      } else {
+        window.location.href = "/";
       }
     } catch (e) {
       console.error("Failed to load user profile", e);
+      window.location.href = "/";
     }
   };
 

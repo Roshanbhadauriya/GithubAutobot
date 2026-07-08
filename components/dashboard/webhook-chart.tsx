@@ -7,7 +7,7 @@ interface WebhookChartProps {
   logs: WebhookLog[];
 }
 
-type TabType = "runs" | "success" | "errors";
+type TabType = "runs" | "matches" | "errors";
 type RangeType = "1w" | "1m" | "6m" | "max";
 
 export default function WebhookChart({ logs }: WebhookChartProps) {
@@ -36,7 +36,7 @@ export default function WebhookChart({ logs }: WebhookChartProps) {
         data.push({
           label,
           runs: dayLogs.length,
-          success: dayLogs.filter((l) => l.status === "success").length,
+          matches: dayLogs.filter((l) => l.status === "success").length,
           errors: dayLogs.filter((l) => l.status === "failed").length,
         });
       }
@@ -55,7 +55,7 @@ export default function WebhookChart({ logs }: WebhookChartProps) {
         data.push({
           label,
           runs: rangeLogs.length,
-          success: rangeLogs.filter((l) => l.status === "success").length,
+          matches: rangeLogs.filter((l) => l.status === "success").length,
           errors: rangeLogs.filter((l) => l.status === "failed").length,
         });
       }
@@ -72,7 +72,7 @@ export default function WebhookChart({ logs }: WebhookChartProps) {
         data.push({
           label,
           runs: rangeLogs.length,
-          success: rangeLogs.filter((l) => l.status === "success").length,
+          matches: rangeLogs.filter((l) => l.status === "success").length,
           errors: rangeLogs.filter((l) => l.status === "failed").length,
         });
       }
@@ -106,7 +106,7 @@ export default function WebhookChart({ logs }: WebhookChartProps) {
 
   const themeMap = {
     runs: { color: "stroke-blue-500", fill: "url(#blueGrad)", text: "text-blue-500" },
-    success: { color: "stroke-green-500", fill: "url(#greenGrad)", text: "text-green-500" },
+    matches: { color: "stroke-green-500", fill: "url(#greenGrad)", text: "text-green-500" },
     errors: { color: "stroke-red-500", fill: "url(#redGrad)", text: "text-red-500" },
   };
 
@@ -118,11 +118,11 @@ export default function WebhookChart({ logs }: WebhookChartProps) {
       <div className="flex justify-between items-center gap-4">
         {/* Metric tabs */}
         <div className="flex items-center gap-1.5 bg-[#111111]/60 p-0.5 rounded-lg border border-[#1f1f1f]">
-          {(["runs", "success", "errors"] as TabType[]).map((tab) => {
-            const labelMap = { runs: "Runs", success: "Success Rate", errors: "Errors" };
+          {(["runs", "matches", "errors"] as TabType[]).map((tab) => {
+            const labelMap = { runs: "Runs", matches: "Rule Matches", errors: "Errors" };
             const valueMap = {
               runs: totalRuns,
-              success: `${totalRuns > 0 ? Math.round((totalSuccess / totalRuns) * 100) : 0}%`,
+              matches: totalSuccess,
               errors: totalErrors,
             };
             const activeClass =
